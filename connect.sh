@@ -57,7 +57,7 @@ if  [ -e $key ]; then
 	}
 else
 	{
-        echo -e "\nThe Key $kf.pem not available. Please drop an email to AP Global Infra Team";
+        echo -e "\nThe Key $kf.pem not available. Please drop an email to Infra Team";
 	sshpass -p $pass ssh -oStrictHostKeyChecking=no -oConnectTimeout=10 sysadmin@$ip || echo -e "\nI'm sorry...... :( $ue is NOT Accessible\n\n" < /dev/null;
 	echo -e "\n\tGood Bye!!\n";
 	exit 0;
