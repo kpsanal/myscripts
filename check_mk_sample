@@ -1,0 +1,21 @@
+#
+#       CheckMK Configuration       July 29, 2018 - Version 1.1
+#
+#       /etc/xinetd.d/check_mk
+
+service check_mk
+{
+        type           = UNLISTED
+        port           = 6556
+        socket_type    = stream
+        protocol       = tcp
+        wait           = no
+        user           = root
+        server         = /usr/bin/check_mk_agent
+
+        # configure the IP address(es) of your Nagios server here:
+        only_from = 127.0.0.1 192.168.1.1
+
+        log_on_success =
+        disable        = no
+}
