@@ -2,7 +2,6 @@
 #
 #			CheckMK Agent Setup
 #
-#	Author: SANAL K P		Team: AP Global Infra
 #	Date: July 29, 2018		Version: 1.4
 #
 #################################################################
