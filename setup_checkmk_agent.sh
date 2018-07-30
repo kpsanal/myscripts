@@ -1,36 +1,35 @@
 #################################################################
 #
 #			CheckMK Agent Setup
-#
-#	Date: July 29, 2018		Version: 1.4
+#	Date: July 30, 2018		Version: 1.6
 #
 #################################################################
 #/bin/bash!
 package="xinetd"
-FileServer="files.yourdomain.com"
-cmkServer="checkmk.yourdomain.com"
-secret="YOUR-Secret"
+FileServer="YourFile Server"
+cmkServer="checkmk master server"
+secret="API Secret"
 
 hostname=`hostname`
 loc=`echo $hostname | cut -c 1-4`
 	if [ "$loc" == "use1" ] || [ "$loc" == "USE1" ]; then
 		{
-		folder="tandfus"
+		folder="folder1"
 		site="SITE1"
 		}
 	elif [ "$loc" == "euw1" ] || [ "$loc" == "EUW1" ]; then
 		{
-		folder="tandfuk"
+		folder="folder2"
 		site="SITE2"
 		}
 	else	
 		{
 		folder="";
-		site="SITE3"
+		site="SITE"
 		}
 	fi
 ip=`ifconfig | awk '{print $2}' | grep -w 10 | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b"`
-curl "http://$cmkServer/TANDF/check_mk/webapi.py?action=add_host&_username=automation&_secret=$secret" -d 'request={"hostname":"'$hostname'","folder":"'$folder'","attributes":{"ipaddress":"'$ip'","site":"'$site'","tag_agent":"cmk-agent"}}'
+curl "http://$cmkServer/SITE/check_mk/webapi.py?action=add_host&_username=automation&_secret=$secret" -d 'request={"hostname":"'$hostname'","folder":"'$folder'","attributes":{"ipaddress":"'$ip'","site":"'$site'","tag_agent":"cmk-agent"}}'
 
 if [ -n "$(command -v lsb_release)" ]; then
 	distroname=$(lsb_release -s -d)
@@ -56,6 +55,8 @@ if [ "$OS" == "Ubuntu" ]; then
 	else
 		{
 		iptables -I INPUT -p tcp -s 10.0.0.0/8 --dport 6556 -j ACCEPT
+		iptables -A OUTPUT -p icmp --icmp-type 8 -s 10.0.0.0/8 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+		iptables -A INPUT -p icmp --icmp-type 0 -s 10.0.0.0/8 -m state --state ESTABLISHED,RELATED -j ACCEPT
 		apt-get install xinetd -y
 		apt-get install wget -y
 		wget -q -t 1 --timeout=10 http://$FileServer/uploads/cmk.deb -O /tmp/cmk.deb; sudo dpkg -i /tmp/cmk.deb;
@@ -82,8 +83,10 @@ elif [ "$OS" == "Amazon" ]; then
 	if [ ! "$isinstalled" == "package $i is not installed" ];then
 		{
 		iptables -I INPUT -p tcp -s 10.0.0.0/8 --dport 6556 -j ACCEPT
+		iptables -A OUTPUT -p icmp --icmp-type 8 -s 10.0.0.0/8 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+		iptables -A INPUT -p icmp --icmp-type 0 -s 10.0.0.0/8 -m state --state ESTABLISHED,RELATED -j ACCEPT
 		yum makecache fast
-		yum install xinetd -y
+		sudo yum install xinetd -y
 		sudo yum install wget -y
 		sudo yum install -y http://$FileServer/uploads/check-mk-agent-1.4.0p18-1.noarch.rpm;
 		wget http://$FileServer/uploads/check_mk -O /etc/xinetd.d/check_mk
@@ -113,10 +116,13 @@ elif [ "$OS" == "CentOS" ]; then
 	if [ ! "$isinstalled" == "package $i is not installed" ];then
 		{	
 			iptables -I INPUT -p tcp -s 10.0.0.0/8 --dport 6556 -j ACCEPT
+			iptables -A OUTPUT -p icmp --icmp-type 8 -s 10.0.0.0/8 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+			iptables -A INPUT -p icmp --icmp-type 0 -s 10.0.0.0/8 -m state --state ESTABLISHED,RELATED -j ACCEPT
 			sudo install wget -y
+			sudo yum install -y xinetd
 			sudo yum install -y http://$FileServer/uploads/check-mk-agent-1.4.0p18-1.noarch.rpm;
 			wget http://$FileServer/uploads/check_mk -O /etc/xinetd.d/check_mk
-			sudo systemctl enable $package;sudo systemctl restart $package;sudo restart $package;
+			sudo systemctl enable $package;sudo systemctl restart $package;
 		}
 	else 
 		{
