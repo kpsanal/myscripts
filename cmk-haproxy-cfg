@@ -1,0 +1,18 @@
+## CMK
+frontend CMK
+   bind *:80
+   stats uri /haproxy?stats
+   default_backend CMK_Sites
+
+backend CMK_Sites
+    option forwardfor
+    option persist # Sessiion Persistance
+    balance roundrobin
+    cookie SERVERNAME insert indirect nocache # Cookie Gen
+    server site-1 localhost:5000 cookie site-1 check
+
+## Live
+listen Live_Stats
+    bind *:9000
+    mode tcp
+    server live localhost:6557
