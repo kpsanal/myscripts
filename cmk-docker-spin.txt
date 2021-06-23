@@ -1,0 +1,5 @@
+# Port 5000 - Web GUI for the CMK
+# Port 6557 - Streaming
+
+# Node1
+docker container run -dit -p 5000:5000 -p 6557:6557 --ulimit nofile=1024 --tmpfs /opt/omd/sites/cmk/tmp:uid=1000,gid=1000 -v checkmk_data:/omd/sites --name controller -v /etc/localtime:/etc/localtime:ro --restart always --env CMK_SITE_ID=node1 --env CMK_PASSWORD=cmkadmin checkmk/check-mk-raw:latest
