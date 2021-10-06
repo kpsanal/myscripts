@@ -1,5 +1,10 @@
-# Port 5000 - Web GUI for the CMK
-# Port 6557 - Streaming
+# Port 5000 - WATO / Web GUI for the CMK
+# Port 6557 - Live Streaming between the Remote and Master Nodes
 
-# Node1
-docker container run -dit -p 5000:5000 -p 6557:6557 --ulimit nofile=1024 --tmpfs /opt/omd/sites/cmk/tmp:uid=1000,gid=1000 -v checkmk_data:/omd/sites --name controller -v /etc/localtime:/etc/localtime:ro --restart always --env CMK_SITE_ID=node1 --env CMK_PASSWORD=cmkadmin checkmk/check-mk-raw:latest
+
+# Controller
+docker container run -dit -p 5000:5000 --ulimit nofile=1024 --tmpfs /opt/omd/sites/cmk/tmp:uid=1000,gid=1000 -v checkmk_data_controller:/omd/sites --name cmk-controller -v /etc/localtime:/etc/localtime:ro --restart always --env CMK_SITE_ID=controller --env CMK_PASSWORD=cmkadmin checkmk/check-mk-raw:2.0.0-latest
+
+
+# PROD
+docker container run -dit -p 5001:5000 -p 6557:6557 --ulimit nofile=1024 --tmpfs /opt/omd/sites/cmk/tmp:uid=1000,gid=1000 -v checkmk_data_prod:/omd/sites --name cmk-poller-prod -v /etc/localtime:/etc/localtime:ro --restart always --env CMK_SITE_ID=prod --env CMK_PASSWORD=cmkadmin checkmk/check-mk-raw:2.0.0-latest
