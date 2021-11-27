@@ -1,17 +1,17 @@
 #!/bin/bash
 ##
-##       Cert Man - SSL Validator
+##       Cert Mon - SSL Validator
 ##       Version 3.6.4   Date: Aug 4, 2021
 ##
 # set -ex
-VERSION="CertMan Version: 3.5.3"
+VERSION="CertMon Version: 3.5.3"
 echo $VERSION
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-if [[ ! -f "$SCRIPT_DIR/cert-man.conf" ]]
+if [[ ! -f "$SCRIPT_DIR/cert-mon.conf" ]]
 then
         {
                 echo -e "\n\nMissing config file - cert-man.conf"
-                echo -e "See cert-man.conf.sample\n\n"
+                echo -e "See cert-mon.conf.sample\n\n"
                 cat <<- EOF > cert-man.conf.sample
 #       Cert Man - Sample Configuration File
 WEBHOOK="https://hooks.slack.com/" # Slack Webhook test
