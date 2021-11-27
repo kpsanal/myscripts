@@ -2,5 +2,5 @@
 WEBHOOK="https://hooks.slack.com/" # Slack Webhook test
 SLACK_CHANNEL="#test123" #Channel Name
 SLACK_BOTNAME="Cert Man" # Bot Name
-FQDNS="" # File with Wesites Eg: www.mscripts.com. And NOT http://www.example.com
+FQDNS="" # File with Wesites Eg: www.example.com. And NOT http://www.example.com
 EXPIRY_DAYS="" # Number of Days before Expiry to notify
