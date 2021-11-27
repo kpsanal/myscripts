@@ -116,7 +116,7 @@ check_certs() {
 if [[ ! -f "$FQDNS" ]]
 then
         {
-        echo -e "\n\nPlease update the FQDNS - filename in the cert-man.conf\nExiting..\n"
+        echo -e "\n\nPlease update the FQDNS - filename in the cert-mon.conf\nExiting..\n"
         exit 1;
         }
 fi
