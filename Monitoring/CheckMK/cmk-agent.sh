@@ -2,11 +2,18 @@
 ##
 ##          This will setup CheckMK Agent
 ##      Date: Oct 14, 2021     Author: Sethu Madhavan
-##      Version: 4.6.1         License: GPL v3
+##      Version: 5.2.3         License: GPL v3
 
-##
-echo -e "\n\n\nCheckMK Automation Tool - 4.6.1\nContact: XXXX Team\n"
+echo -e "\n\n\nCheckMK Automation Tool - 5.2.3\nContact: SRE Team\n"
 echo -e "\n\t\t`date`\n\t\tInstalling and configuring CheckMK Agent in /opt/CheckMK...\n\n"
+echo -e "\nSystem Requirement Packages: xinetd,jq,checkmk"
+
+# User Check - root
+if [[ $EUID -ne 0 ]]; then
+   echo "Error: This script must be run as root!!!"
+   exit 1
+fi
+
 SDIR="/opt/CheckMK"
 mkdir $SDIR
 
@@ -25,28 +32,23 @@ then
 #
 CMK="cmk.local"
 SITE="controller"
+TYPE=""
 CMID="automation"
-KEY="api-key xxxx"
+KEY="2342-key"
 CMK_AGENT="check-mk-agent_2.0.0p18-1_all.deb"
 EOF
         }
 fi
 
-# Reregister at every system reboot
-set_cron () {
-echo -e "\nUpdating Cronjob"
-# @reboot /opt/CheckMK/cmk_agent.bin > /var/log/cmk_agent_install.log
-}
-
 validate_site () {
     ACCOUNT=`curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.accountId'`
     if [ $ACCOUNT == 1234 ]; then
             {
-                    FOLDER="prod"
+                MSITE="prod"
             }
-    elif [ $ACCOUNT == 3456 ]; then
+    elif [ $ACCOUNT == 1111 ]; then
             {
-                    FOLDER="uat"
+                MSITE="uat"
             }
     fi
 }
@@ -54,16 +56,12 @@ validate_site () {
 # Get Info
 IP=`curl -s http://169.254.169.254/latest/meta-data/local-ipv4`
 
-# Installing JQ
-if ! dpkg -s jq 2> /dev/null; then
-    sudo apt-get install jq -y
-fi
-
 get_config () {
     typeset -A config
     config=(
         [CMK]=""
         [SITE]=""
+        [TYPE]=""
         [CMID]=""
         [KEY]=""
         [CMK_AGENT]=""
@@ -79,6 +77,7 @@ get_config () {
 
     CMK=${config[CMK]}
     SITE=${config[SITE]}
+    TYPE=${config[TYPE]}
     CMID=${config[CMID]}
     KEY=${config[KEY]}
     CMK_AGENT=${config[CMK_AGENT]}
@@ -103,35 +102,19 @@ call_api() {
     fi
 }
 
-# Install Agent
-install_agent () {
-    if ! dpkg -s check-mk-agent 2> /dev/null; then
-        {
-        apt-get install xinetd -y
-        echo -e "\nInstalling CheckMK Agent...\n"
-        wget -q -t 1 --timeout=10 http://$CMK/$SITE/check_mk/agents/$CMK_AGENT -O /tmp/cmk.deb
-        sudo dpkg -i /tmp/cmk.deb
-        service xinetd restart
-        }
-    else
-        {
-        echo -e "\nCheckMK Agent is already Installed\n"
-        }
-    fi
-}
 
 # Update Monitor
 add_mon() {
-    echo -e "\nAdding HOST $HOSTNAME\n"
+    echo -e "\nAdding HOST $HOST on $MSITE\n"
     API="domain-types/host_config/collections/all"
-    DATA='"attributes":{"ipaddress":"'$IP'"},"folder":"'\~$FOLDER'","host_name":"'$HOSTNAME'"'
+    DATA='"attributes":{"ipaddress":"'$IP'"},"folder":"'\~$FOLDER'","host_name":"'$HOST'"'
     CALL="Host Added"
     call_api
 }
 
 discovery() {
-    echo -e "\nStarting Service Discovery for $HOSTNAME\n"
-    API="objects/host/$HOSTNAME/actions/discover_services/invoke"
+    echo -e "\nStarting Service Discovery for $HOST\n"
+    API="objects/host/$HOST/actions/discover_services/invoke"
     DATA='"mode":"refresh"'
     CALL="Service Discovery"
     call_api
@@ -140,7 +123,7 @@ discovery() {
 apply_change() {
     echo -e "\nApplying the Changes...\n"
     API="domain-types/activation_run/actions/activate-changes/invoke"
-    DATA='"force_foreign_changes":false,"redirect":false,"sites":["'$FOLDER'"]'
+    DATA='"force_foreign_changes":false,"redirect":false,"sites":["'$MSITE'"]'
     CALL="Applied Changes"
     call_api
 }
@@ -151,13 +134,23 @@ get_config
 # Validate Site
 validate_site
 
-# Install CMK Agent
-install_agent
+if [ -z $TYPE ]; then
+        {
+         FOLDER="$MSITE"
+        }
+else
+        {
+        FOLDER="$MSITE"_"$TYPE"
+        }
+fi
 
 # Sleep for for CFT to complete
-sleep $1 || sleep 600
+SLP=${1:-1200}
+echo "Sleeping....$SLP"
+sleep $SLP
 
 # Add Monitor
+HOST=`hostname -s`
 add_mon
 
 # Starting Service Discovery
@@ -166,5 +159,6 @@ discovery
 # Save the Change
 sleep 20 # wait for service discovery
 apply_change
+
 
 # END
